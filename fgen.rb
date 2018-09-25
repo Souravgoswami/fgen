@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-
 require 'io/console'
 
 def help
@@ -10,18 +9,18 @@ Help:
 
 	Running me:
 		Just run me as you run other programs.
-		Example 1 (using the shell):
-			chmod 777 fgen.rb
-			./fgen.rb
-		Example 2 (using the ruby interpreter):
-			ruby fgen.rb
+			Example 1 (using the shell):
+				chmod 777 fgen.rb
+				./fgen.rb
+			Example 2 (using the ruby interpreter):
+				ruby fgen.rb
 
 	Usage:
 		1. After you got me running, I will ask you to choose a font style template. There are many.
 		2. Select a template of your choice, and then start typing, I will show you what you typed.
 		3. When done, press escape key or Ctrl + c or Ctrl + d to quit me.
 		4. You can also pass arguments to me, I will show them but you need to confirm the style.
-			Example:
+			Example 1:
 				./fgen.rb give me a sweet font!
 			Example 2:
 				ruby fgen.rb show me a magic!
@@ -33,7 +32,7 @@ Help:
 		\xe3\x8b\xa1\x00
 	Have a Good Day!
 EOF
-exit!
+	exit!
 end
 
 help if ['-h', '--help'].include? ARGV[0]
@@ -77,23 +76,18 @@ begin
 	font, word = fonts[choice - 1], ''
 
 	if ARGV.empty?
-	puts "Start Typing!..."
-	loop do
-		w = STDIN.getch.downcase
-		word.chop!.chop! if w == "\u007F"
-		exit if ["\u0003", "\u0004", "\e"].include?(w)
-		word += "\n" if w == "\r"
-		word += "#{w =~ /[a-z]/ ? gen(font, w) : w }"
-		print "\033[H\033[J#{word}"
-	end
-
+		puts "Start Typing!..."
+		loop do
+			w = STDIN.getch.downcase
+			word.chop!.chop! if w == "\u007F"
+			exit if ["\u0003", "\u0004", "\e"].include?(w)
+			word += "\n" if w == "\r"
+			word += "#{w =~ /[a-z]/ ? gen(font, w) : w }"
+			print "\033[H\033[J#{word}"
+		end
 	else
 		puts choice
-		ARGV.each do |word|
-			word.chars do |w|
-				print w =~ /[a-z]/ ? gen(font, w) : w
-			end
-		end
+		ARGV.each do |word| word.chars do |w| print w =~ /[a-z]/ ? gen(font, w) : w end end
 	end
 rescue Exception
 	help
