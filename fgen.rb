@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 require 'io/console'
-
 def help
 	puts <<EOF
 Help:
@@ -37,9 +36,12 @@ end
 help if ['-h', '--help'].include? ARGV[0]
 
 begin
-	gen = ->(font, ch) do font, h = font.encode('utf-8'), {}
-				('a'..'z').map do |c| h[c] = font ; font = font.succ end ; h[ch]
-			end
+	gen = ->(font, ch) {
+				('a'..'z').each do |c|
+					return font if c == ch
+					font = font.succ
+				end
+	}
 
 	fonts = ["\xf0\x9d\x93\xaa" ,"\xf0\x9d\x90\x9a", "\xf0\x9d\x9a\x8a", "\xf0\x9d\x96\xba", "\x61\xcc\xbd\xcd\x90", "\x61\xcc\xbd\xcd\x91",
 			"\x61\xcc\xbd\xcd\x92", "\x61\xcc\xbd\xcd\x93", "\x61\xcc\xbd\xcd\x94", "\x61\xcc\xbd\xcd\x95", "\x61\xcc\xbd\xcd\x96",
@@ -50,18 +52,20 @@ begin
 			"\x61\xcc\xb5", "\x61\xcc\xb6", "\x61\xcc\xb7", "\x61\xcc\xb8", "\x61\xcc\xb9" ]
 	at_exit do
 		puts "\n\t\033[38;5;#{rand(0..255)}m\xe3\x8b\xa1\x00"
-		s, greet = fonts.sample, ['have a good day', 'bye!', 'see you!', 'take care!'].sample
+		s, greet = fonts.sample, ['have a good day', 'bye!', 'see you!'].sample
 		greet.chars do |c| print c =~ /[a-z]/ ? gen.call(s, c) : c end ; puts
 	end
 
 	puts "The Available Styles are:\n\n"
 	fonts.size.times do |count| print "\t#{count + 1} "
-		('a'..'z').map do |c| print gen.call(fonts[count], c) end ; puts
+		('a'..'z').map do |c| print gen.call(fonts[count], c) end
+		puts
 	end
 
 	print "\nSelect any Style(from 1 to #{fonts.size}): "
 	choice = STDIN.gets.to_i
-	exit! 0 if choice > fonts.size + 1 or choice < 1
+	choice = (fonts.size) if choice > fonts.size + 1
+	choice = 1 if choice < 1
 	font, word = fonts[choice - 1], ''
 
 	if ARGV.empty?
@@ -69,7 +73,7 @@ begin
 		loop do
 			w = STDIN.getch.downcase
 			word.chop!.chop! if w == "\u007F"
-			exit 0 if ["\u0003", "\u0004", "\e"].include?(w)
+			exit if ["\u0003", "\u0004", "\e"].include?(w)
 			word += "\n" if w == "\r"
 			word += "#{w =~ /[a-z]/ ? gen.call(font, w) : w }"
 			print "\033[H\033[J#{word}"
@@ -77,4 +81,6 @@ begin
 	else ARGV.each do |word| word.chars do |w| print w =~ /[a-z]/ ? gen.call(font, w) : w end end
 	end
 rescue Exception
+	print "\nExit now? (Y/n) "
+	exit if STDIN.gets.downcase.include?('y')
 end
