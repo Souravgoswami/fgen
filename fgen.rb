@@ -1,9 +1,7 @@
 #!/usr/bin/ruby -W0
 # Written by Sourav Goswami
 # The GNU General Public License v3.0
-
 require 'io/console'
-require 'timeout'
 
 END { puts "\033[0m" }
 
