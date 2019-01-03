@@ -64,12 +64,7 @@ else
 end
 
 begin
-	gen = ->(font, ch) {
-				('a'..'z').each do |c|
-					return font if c == ch
-					font = font.succ
-				end
-	}
+	gen = ->(font, ch) { ('a'..'z').each { |c| if c == ch then return font else font = font.succ end } }
 
 	fonts = ["\x61\x00", "\xf0\x9d\x93\xaa" ,"\xf0\x9d\x90\x9a", "\xf0\x9d\x9a\x8a", "\xf0\x9d\x96\xba",
 			"\x61\xcc\xbd\xcd\x90", "\x61\xcc\xbd\xcd\x91", "\x61\xcc\xbd\xcd\x92",
