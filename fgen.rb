@@ -2,11 +2,12 @@
 # Written by Sourav Goswami
 # The GNU General Public License v3.0
 require 'io/console'
+require 'timeout'
 
 END { puts "\033[0m" }
 
 Help = -> {
-	puts <<EOF
+puts <<EOF
 Help:
 	Hi, my name is font generator, also known as fgen.
 	I am a funny, little program who generates a font of your choice on your terminal!
@@ -33,21 +34,19 @@ Help:
 			ctrl + s			go down from the cursor
 			ctrl + a			go to the left from the cursor
 			ctrl + d			go to the right from the cursor
-			ctrl + space			delete the character under the cursor from the cursor
+			ctrl + space			clear the character under the cursor
 			ctrl + r			clear the input
-			ctrl + l			clear the input
+			ctrl + l			clear the inputs
 			ctrl + k			exit prompt
 			ctrl + c			exit prompt
+			ctrl + q			change font style randomly!
 
 		Suggestion: This program uses UTF-8 fonts, and can be copied to use them on the web (if supported).
 EOF
-	exit! 0
+exit! 0
 }
 
-if ARGV.include?('--help')
-	Help.call
-	ARGV.delete('--help')
-end
+Help.call if ARGV.include?('--help')
 
 if ARGV.include?('--blink')
 	@blink = true
@@ -88,13 +87,19 @@ begin
 	font, word = fonts[choice - 1], ''
 	font = fonts.sample if random
 
-	colour, c = [208..214, 75..81, 196..201, 40..45].sample.to_a, 0
+	colours = [75..81, 196..201, 40..45, 70..75, 136..140, 208..213, 214..219].map(&:to_a)
+	colours.concat(colours.map(&:reverse))
+
+	colour, c = colours.sample.to_a, 0
 	colour_size = colour.size
 
 	print_text = ->(w) {
 			if @coloured
 				c += 1
-				c = 0 if c == colour_size
+				if c == colour_size
+					c, colour = 0, colours.sample.to_a
+					colour_size = colours.size
+				end
 				chars = w =~ /[a-z]/ ? gen.call(font, w) : w
 				"\033[38;5;#{colour[c]}m#{chars}"
 			else
@@ -117,17 +122,19 @@ begin
 				when "\u0004" then word += "\e[C"			# ctrl + d => right
 				when "\u0000" then word += "\s\b"			# ctrl + space => delete
 				when "\u0011" then font = fonts.sample			# ctrl + q => random font
-				when "\u0012" then word = ''				 		# ctrl + r => clear
 				when "\f" then word = ''						# ctrl + l => clear
+				when "\u0012"									# ctrl + r => clear
+					word = ''
+					print "\e[3J\e[H\e[2J"
 				else
-					word += "\033[5m" if @blink				# blink flag used
-					word += print_text.call(w)
+					word.concat("\e[5m") if @blink				# blink flag used
+					word.concat(print_text.call(w))
 			end
-			print "\033[H\033[J#{word}"
+			print "\e[3J\e[H\e[2J#{word}"
 		end
 	else
 		ARGV.join(' ').each_char do |w|
-				print "\033[5m" if @blink
+				print "\e[5m" if @blink
 				print(print_text.call(w))
 		end
 	end
@@ -142,6 +149,7 @@ rescue Interrupt
 	end
 
 	exit 0
+
 rescue Exception => e
 	puts "\033[0mUh oh, #{__FILE__} crashed\nWhat would you like to do?
 		1. Exit
